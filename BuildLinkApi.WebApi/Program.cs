@@ -1,5 +1,6 @@
 using BuildLinkApi.Application;
 using BuildLinkApi.Infrastructure;
+using BuildLinkApi.WebApi.Middlewares;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -40,6 +41,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseSerilogRequestLogging();
+
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 app.UseHttpsRedirection();
 
