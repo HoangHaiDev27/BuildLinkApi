@@ -6,7 +6,8 @@ using BuildLinkApi.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-
+using BuildLinkApi.Application.Interfaces.Repositories;
+using BuildLinkApi.Infrastructure.Repositories;
 namespace BuildLinkApi.Infrastructure
 {
     public static class DependencyInjection
@@ -21,7 +22,7 @@ namespace BuildLinkApi.Infrastructure
             {
                 options.UseSqlServer(connectionString);
             });
-
+            services.AddScoped<IUnitOfWork, UnitOfWork>();
             return services;
         }
     }

@@ -2,6 +2,7 @@ using BuildLinkApi.Application;
 using BuildLinkApi.Infrastructure;
 using BuildLinkApi.WebApi.Middlewares;
 using Serilog;
+using BuildLinkApi.Infrastructure.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -34,6 +35,12 @@ builder.Services.AddHealthChecks();
 
 var app = builder.Build();
 
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    await DbInitializer.SeedAsync(dbContext);
+}
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -53,5 +60,7 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.MapHealthChecks("/health");
+
+
 
 app.Run();
