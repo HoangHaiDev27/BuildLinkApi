@@ -1,0 +1,6 @@
+@BuildLinkApi.WebApi_HostAddress = http://localhost:5074
+
+GET {{BuildLinkApi.WebApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

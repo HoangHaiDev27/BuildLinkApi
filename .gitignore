@@ -1,0 +1,96 @@
+## =============================================
+## Build results
+## =============================================
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+[Ww][Ii][Nn]32/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+## =============================================
+## Visual Studio / Rider / IDE
+## =============================================
+.vs/
+.vscode/
+.idea/
+*.userprefs
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.DotSettings.user
+_ReSharper*/
+*.[Rr]e[Ss]harper
+
+## =============================================
+## .NET / NuGet
+## =============================================
+project.lock.json
+project.fragment.lock.json
+artifacts/
+*.nupkg
+*.snupkg
+.nuget/
+packages/
+!packages/build/
+*.nuget.props
+*.nuget.targets
+
+## =============================================
+## Build / Test output
+## =============================================
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+*.VisualState.xml
+TestResult.xml
+coverage*.json
+coverage*.xml
+coverage*.info
+*.coverage
+*.coveragexml
+
+## =============================================
+## Secrets & cấu hình (KHÔNG commit)
+## =============================================
+# Biến môi trường
+.env
+.env.*
+*.env
+
+# App settings (chứa connection string, API keys, secrets...)
+appsettings.json
+appsettings.*.json
+!appsettings.Example.json
+
+# User secrets
+secrets.json
+
+## =============================================
+## Operating System
+## =============================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+## =============================================
+## Misc
+## =============================================
+*.log
+*.tmp
+*.cache
+*.bak
+node_modules/
