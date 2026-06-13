@@ -1,0 +1,113 @@
+name: CI/CD - BuildLink API
+
+# build-test chạy khi push lên main HOẶC develop.
+# deploy CHỈ chạy khi push lên main (xem điều kiện "if" ở job deploy).
+on:
+  push:
+    branches: [main, develop]
+  workflow_dispatch:
+
+env:
+  AWS_REGION: ap-southeast-1
+  ECR_REPOSITORY: buildlink-api
+
+jobs:
+  # =========================================================
+  # JOB 1: Build & Test — cổng kiểm tra nhanh, chạy trên runner
+  # =========================================================
+  build-test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build (Release)
+        run: dotnet build --no-restore -c Release
+
+      - name: Test
+        # Hiện chưa có test project -> bước này sẽ "no tests" và pass.
+        # Khi bạn thêm project test, nó tự chạy mà không cần sửa file này.
+        run: dotnet test --no-build -c Release --verbosity normal
+
+  # =========================================================
+  # JOB 2: Build image -> Push ECR -> Deploy EC2
+  # Chỉ chạy khi build-test đã thành công
+  # =========================================================
+  deploy:
+    name: Build, Push & Deploy
+    needs: build-test
+    # Chỉ deploy khi là nhánh main. Push develop -> chỉ build-test, KHÔNG deploy.
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build & push Docker image
+        env:
+          ECR_REGISTRY: ${{ steps.ecr-login.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          IMAGE_URI="$ECR_REGISTRY/$ECR_REPOSITORY"
+          docker build -t "$IMAGE_URI:$IMAGE_TAG" -t "$IMAGE_URI:latest" .
+          docker push "$IMAGE_URI:$IMAGE_TAG"
+          docker push "$IMAGE_URI:latest"
+          # Truyền image URI sang step deploy
+          echo "IMAGE_URI=$IMAGE_URI:$IMAGE_TAG" >> "$GITHUB_ENV"
+
+      - name: Deploy to EC2 via SSM
+        env:
+          EC2_INSTANCE_ID: ${{ secrets.EC2_INSTANCE_ID }}
+        run: |
+          # Gửi lệnh chạy script deploy.sh có sẵn trên EC2, truyền image URI vào
+          CMD_ID=$(aws ssm send-command \
+            --region "$AWS_REGION" \
+            --instance-ids "$EC2_INSTANCE_ID" \
+            --document-name "AWS-RunShellScript" \
+            --comment "Deploy buildlink-api ${{ github.sha }}" \
+            --parameters commands="bash /home/ubuntu/deploy.sh $IMAGE_URI" \
+            --query "Command.CommandId" --output text)
+          echo "SSM Command ID: $CMD_ID"
+
+          # Chờ lệnh chạy xong
+          aws ssm wait command-executed \
+            --region "$AWS_REGION" \
+            --command-id "$CMD_ID" \
+            --instance-id "$EC2_INSTANCE_ID" || true
+
+          # In log từ EC2 ra console của GitHub Actions
+          echo "----------- STDOUT -----------"
+          aws ssm get-command-invocation --region "$AWS_REGION" \
+            --command-id "$CMD_ID" --instance-id "$EC2_INSTANCE_ID" \
+            --query "StandardOutputContent" --output text
+          echo "----------- STDERR -----------"
+          aws ssm get-command-invocation --region "$AWS_REGION" \
+            --command-id "$CMD_ID" --instance-id "$EC2_INSTANCE_ID" \
+            --query "StandardErrorContent" --output text
+
+          # Lấy trạng thái cuối; nếu không Success thì fail job
+          STATUS=$(aws ssm get-command-invocation --region "$AWS_REGION" \
+            --command-id "$CMD_ID" --instance-id "$EC2_INSTANCE_ID" \
+            --query "Status" --output text)
+          echo "Deploy status: $STATUS"
+          [ "$STATUS" = "Success" ] || exit 1
