@@ -8,15 +8,15 @@ namespace BuildLinkApi.Application.Interfaces.Repositories
 {
     public interface IUnitOfWork
     {
-        IGenericRepository<Account> Accounts { get; }
+        IAccountRepository Accounts { get; }
 
         IGenericRepository<User> Users { get; }
 
-        IGenericRepository<Role> Roles { get; }
+        IRoleRepository Roles { get; }
 
         IGenericRepository<AccountRole> AccountRoles { get; }
 
-        IGenericRepository<RefreshToken> RefreshTokens { get; }
+        IRefreshTokenRepository RefreshTokens { get; }
 
         IGenericRepository<Company> Companies { get; }
 

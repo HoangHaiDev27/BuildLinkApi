@@ -16,11 +16,11 @@ namespace BuildLinkApi.Infrastructure.Repositories
         {
             _context = context;
 
-            Accounts = new GenericRepository<Account>(_context);
+            Accounts = new AccountRepository(_context);
             Users = new GenericRepository<User>(_context);
-            Roles = new GenericRepository<Role>(_context);
+            Roles = new RoleRepository(_context);
             AccountRoles = new GenericRepository<AccountRole>(_context);
-            RefreshTokens = new GenericRepository<RefreshToken>(_context);
+            RefreshTokens = new RefreshTokenRepository(_context);
 
             Companies = new GenericRepository<Company>(_context);
             FileAssets = new GenericRepository<FileAsset>(_context);
@@ -32,15 +32,15 @@ namespace BuildLinkApi.Infrastructure.Repositories
             SystemSettings = new GenericRepository<SystemSetting>(_context);
         }
 
-        public IGenericRepository<Account> Accounts { get; }
+        public IAccountRepository Accounts { get; }
 
         public IGenericRepository<User> Users { get; }
 
-        public IGenericRepository<Role> Roles { get; }
+        public IRoleRepository Roles { get; }
 
         public IGenericRepository<AccountRole> AccountRoles { get; }
 
-        public IGenericRepository<RefreshToken> RefreshTokens { get; }
+        public IRefreshTokenRepository RefreshTokens { get; }
 
         public IGenericRepository<Company> Companies { get; }
 

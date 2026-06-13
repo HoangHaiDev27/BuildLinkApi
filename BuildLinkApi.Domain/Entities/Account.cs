@@ -29,6 +29,7 @@ namespace BuildLinkApi.Domain.Entities
 
         public Company? Company { get; set; }
 
+
         public ICollection<AccountRole> AccountRoles { get; set; } = new List<AccountRole>();
 
         public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();

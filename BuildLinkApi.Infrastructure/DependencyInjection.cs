@@ -8,6 +8,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using BuildLinkApi.Application.Interfaces.Repositories;
 using BuildLinkApi.Infrastructure.Repositories;
+using AutoMapper;
+using BuildLinkApi.Application.Interfaces.Services;
+using BuildLinkApi.Infrastructure.Services;
 namespace BuildLinkApi.Infrastructure
 {
     public static class DependencyInjection
@@ -23,6 +26,9 @@ namespace BuildLinkApi.Infrastructure
                 options.UseSqlServer(connectionString);
             });
             services.AddScoped<IUnitOfWork, UnitOfWork>();
+            services.AddScoped<IMapper, Mapper>();
+            services.AddScoped<IAuthService, AuthService>();
+            services.AddScoped<IPasswordHasher, PasswordHasher>();
             return services;
         }
     }
