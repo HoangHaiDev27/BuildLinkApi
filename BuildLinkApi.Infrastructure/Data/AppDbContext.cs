@@ -28,6 +28,13 @@ namespace BuildLinkApi.Infrastructure.Data
         public DbSet<Project> Projects => Set<Project>();
         public DbSet<ProjectImage> ProjectImages => Set<ProjectImage>();
 
+        public DbSet<ProductCategory> ProductCategories => Set<ProductCategory>();
+        public DbSet<Product> Products => Set<Product>();
+        public DbSet<Order> Orders => Set<Order>();
+        public DbSet<OrderItem> OrderItems => Set<OrderItem>();
+        public DbSet<ServicePackage> ServicePackages => Set<ServicePackage>();
+        public DbSet<Address> Addresses => Set<Address>();
+
         public DbSet<SystemSetting> SystemSettings => Set<SystemSetting>();
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

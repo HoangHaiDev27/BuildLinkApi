@@ -50,5 +50,9 @@ namespace BuildLinkApi.Domain.Entities
         public ICollection<Project> Projects { get; set; } = new List<Project>();
 
         public ICollection<CompanyCertificate> Certificates { get; set; } = new List<CompanyCertificate>();
+
+        public ICollection<Product> Products { get; set; } = new List<Product>();
+
+        public ICollection<ServicePackage> ServicePackages { get; set; } = new List<ServicePackage>();
     }
 }
