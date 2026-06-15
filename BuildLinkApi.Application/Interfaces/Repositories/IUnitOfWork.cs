@@ -14,8 +14,6 @@ namespace BuildLinkApi.Application.Interfaces.Repositories
 
         IRoleRepository Roles { get; }
 
-        IGenericRepository<AccountRole> AccountRoles { get; }
-
         IRefreshTokenRepository RefreshTokens { get; }
 
         IGenericRepository<Company> Companies { get; }

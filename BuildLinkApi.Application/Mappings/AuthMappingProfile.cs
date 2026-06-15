@@ -17,10 +17,8 @@ namespace BuildLinkApi.Application.Mappings
                     opt => opt.MapFrom(src => src.Id))
                 .ForMember(dest => dest.AccountType,
                     opt => opt.MapFrom(src => src.AccountType.ToString()))
-                .ForMember(dest => dest.Roles,
-                    opt => opt.MapFrom(src => src.AccountRoles
-                        .Select(ar => ar.Role.Name)
-                        .ToList()));
+                .ForMember(dest => dest.Role,
+                    opt => opt.MapFrom(src => src.Role.Name));
         }
     }
 }

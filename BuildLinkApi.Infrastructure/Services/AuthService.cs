@@ -39,7 +39,7 @@ namespace BuildLinkApi.Infrastructure.Services
         }
         public async Task<ApiResponse<CurrentAccountResponse>> GetCurrentAccountAsync(Guid accountId)
         {
-            var account = await _unitOfWork.Accounts.GetByIdAsync(accountId);
+            var account = await _unitOfWork.Accounts.GetByIdWithRoleAsync(accountId);
 
             if (account == null)
             {
@@ -52,7 +52,7 @@ namespace BuildLinkApi.Infrastructure.Services
 
         public async Task<ApiResponse<AuthResponse>> LoginAsync(LoginRequest request)
         {
-            var account = await _unitOfWork.Accounts.GetByEmailAsync(request.Email);
+            var account = await _unitOfWork.Accounts.GetByEmailWithRoleAsync(request.Email);
 
             if (account == null)
             {
@@ -69,9 +69,9 @@ namespace BuildLinkApi.Infrastructure.Services
 
             account.LastLoginAt = DateTime.Now;
 
-            var roles = account.AccountRoles.Select(x => x.Role.Name).ToList();
+            var role = account.Role.Name;
 
-            var authResponse = await BuildAuthResponseAsync(account, roles);
+            var authResponse = await BuildAuthResponseAsync(account, role);
 
             await _unitOfWork.SaveChangesAsync();
 
@@ -111,7 +111,8 @@ namespace BuildLinkApi.Infrastructure.Services
                 Email = email,
                 PasswordHash = _hasher.HashPassword(request.Password),
                 Status = AccountStatus.Active,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                RoleId = role.Id
             };
 
             if (role.Name == "Customer")
@@ -145,16 +146,7 @@ namespace BuildLinkApi.Infrastructure.Services
                 await _unitOfWork.Companies.AddAsync(company);
             }
 
-            var accountRole = new AccountRole
-            {
-                Id = Guid.NewGuid(),
-                AccountId = account.Id,
-                RoleId = role.Id,
-                CreatedAt = DateTime.UtcNow
-            };
-
             await _unitOfWork.Accounts.AddAsync(account);
-            await _unitOfWork.AccountRoles.AddAsync(accountRole);
 
             await _unitOfWork.SaveChangesAsync();
 
@@ -168,11 +160,11 @@ namespace BuildLinkApi.Infrastructure.Services
 
             return ApiResponse<RegisterRespone>.Ok(result, "Register successful");
         }
-        private async Task<AuthResponse> BuildAuthResponseAsync(Account account, List<string> roles)
+        private async Task<AuthResponse> BuildAuthResponseAsync(Account account, string role)
         {
             var accessTokenExpiresAt = DateTime.UtcNow.AddMinutes(_jwtSettings.ExpireMinutes);
             var refreshTokenExpiresAt = DateTime.UtcNow.AddDays(7);
-            var accessToken = GenerateAccessToken(account, roles, accessTokenExpiresAt);
+            var accessToken = GenerateAccessToken(account, role, accessTokenExpiresAt);
             var refreshTokenValue = GenerateRefreshToken();
             var refreshToken = new RefreshToken
             {
@@ -193,7 +185,7 @@ namespace BuildLinkApi.Infrastructure.Services
                 CompanyId = account.CompanyId,
                 Email = account.Email,
                 AccountType = account.AccountType.ToString(),
-                Roles = roles,
+                Role = role,
                 AccessToken = accessToken,
                 RefreshToken = refreshTokenValue,
                 AccessTokenExpiresAt = accessTokenExpiresAt,
@@ -201,7 +193,7 @@ namespace BuildLinkApi.Infrastructure.Services
             };
 
         }
-        private string GenerateAccessToken(Account account, List<string> roles, DateTime expiresAt)
+        private string GenerateAccessToken(Account account, string role, DateTime expiresAt)
         {
             var claims = new List<Claim>
                 {
@@ -219,10 +211,7 @@ namespace BuildLinkApi.Infrastructure.Services
             {
                 claims.Add(new Claim("companyId", account.CompanyId.Value.ToString()));
             }
-            foreach (var role in roles)
-            {
-                claims.Add(new Claim(ClaimTypes.Role, role));
-            }
+            claims.Add(new Claim(ClaimTypes.Role, role));
             var key = new SymmetricSecurityKey(
             Encoding.UTF8.GetBytes(_jwtSettings.Key)
         );
@@ -316,14 +305,12 @@ namespace BuildLinkApi.Infrastructure.Services
                 return ApiResponse<AuthResponse>.Fail("Account is not active");
             }
 
-            var roles = account.AccountRoles
-                .Select(x => x.Role.Name)
-                .ToList();
+            var role = account.Role.Name;
 
             refreshToken.IsRevoked = true;
             refreshToken.RevokedAt = DateTime.UtcNow;
 
-            var authResponse = await BuildAuthResponseAsync(account, roles);
+            var authResponse = await BuildAuthResponseAsync(account, role);
 
             await _unitOfWork.SaveChangesAsync();
 

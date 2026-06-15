@@ -10,9 +10,9 @@ namespace BuildLinkApi.Application.Interfaces.Repositories
     {
         Task<Account?> GetByEmailAsync(string email);
 
-        Task<Account?> GetByEmailWithRolesAsync(string email);
+        Task<Account?> GetByEmailWithRoleAsync(string email);
 
-        Task<Account?> GetByIdWithRolesAsync(Guid accountId);
+        Task<Account?> GetByIdWithRoleAsync(Guid accountId);
 
 
     }

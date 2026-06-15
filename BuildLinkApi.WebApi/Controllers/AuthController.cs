@@ -19,15 +19,25 @@ namespace BuildLinkApi.WebApi.Controllers
         {
             _authservice = authService;
         }
+        [Authorize]
         [HttpPost("me")]
-        public async Task<IActionResult> GetCurrentAccount([FromBody] Guid accountId)
+        public async Task<IActionResult> GetCurrentAccount()
         {
-            var user = await _authservice.GetCurrentAccountAsync(accountId);
-            if (user == null)
+            // Get Claim "account Id" from token
+            var accountIdClaim = User.FindFirst("accountId")?.Value;
+
+            // Parse -> Guid
+            if (!Guid.TryParse(accountIdClaim, out var accountId))
             {
-                return BadRequest(user);
+                return Unauthorized(ApiResponse<object>.Fail("Invalid token"));
             }
-            return Ok(user);
+
+            var result = await _authservice.GetCurrentAccountAsync(accountId);
+            if (result == null)
+            {
+                return NotFound(result);
+            }
+            return Ok(result);
         }
 
         [HttpPost("login")]
