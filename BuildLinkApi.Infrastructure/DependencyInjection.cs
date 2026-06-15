@@ -39,6 +39,7 @@ namespace BuildLinkApi.Infrastructure
                 RegionEndpoint = RegionEndpoint.GetBySystemName(awsRegion)
             };
             services.AddSingleton<IAmazonSQS>(new AmazonSQSClient(sqsConfig));
+            services.AddScoped<ITurnstileService, TurnstileService>();
             services.AddScoped<IMessageQueueService, MessageQueueService>();
 
             return services;

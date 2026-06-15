@@ -15,10 +15,11 @@ namespace BuildLinkApi.WebApi.Controllers
     public class AuthController : ControllerBase
     {
         private readonly IAuthService _authservice;
-
-        public AuthController(IAuthService authService)
+        private readonly ITurnstileService _turnstile;
+        public AuthController(IAuthService authService, ITurnstileService turnstile)
         {
             _authservice = authService;
+            _turnstile = turnstile;
         }
         [Authorize]
         [HttpPost("me")]
@@ -44,6 +45,13 @@ namespace BuildLinkApi.WebApi.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
+            var remoteIp = HttpContext.Connection.RemoteIpAddress?.ToString();
+            if (!await _turnstile.VerifyAsync(request.CaptchaToken, remoteIp))
+            {
+                return BadRequest(ApiResponse<object>.Fail(
+                    "Capcha fail. Try again!"));
+            }
+
             var result = await _authservice.LoginAsync(request);
 
             if (!result.Success || result.Data == null)
