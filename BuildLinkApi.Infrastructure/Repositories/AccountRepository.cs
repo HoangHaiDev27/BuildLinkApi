@@ -22,14 +22,14 @@ namespace BuildLinkApi.Infrastructure.Repositories
             return await _context.Accounts.FirstOrDefaultAsync(x => x.Email == email && !x.IsDeleted);
         }
 
-        public async Task<Account?> GetByEmailWithRolesAsync(string email)
+        public async Task<Account?> GetByEmailWithRoleAsync(string email)
         {
-            return await _context.Accounts.Include(x => x.AccountRoles).ThenInclude(x => x.Role).FirstOrDefaultAsync(x => x.Email == email && !x.IsDeleted);
+            return await _context.Accounts.Include(x => x.Role).FirstOrDefaultAsync(x => x.Email == email && !x.IsDeleted);
         }
 
-        public async Task<Account?> GetByIdWithRolesAsync(Guid accountId)
+        public async Task<Account?> GetByIdWithRoleAsync(Guid accountId)
         {
-            return await _context.Accounts.Include(x => x.AccountRoles).ThenInclude(x => x.Role).FirstOrDefaultAsync(x => x.Id == accountId && x.IsDeleted);
+            return await _context.Accounts.Include(x => x.Role).FirstOrDefaultAsync(x => x.Id == accountId && !x.IsDeleted);
         }
     }
 }

@@ -19,7 +19,6 @@ namespace BuildLinkApi.Infrastructure.Repositories
             Accounts = new AccountRepository(_context);
             Users = new GenericRepository<User>(_context);
             Roles = new RoleRepository(_context);
-            AccountRoles = new GenericRepository<AccountRole>(_context);
             RefreshTokens = new RefreshTokenRepository(_context);
 
             Companies = new GenericRepository<Company>(_context);
@@ -37,8 +36,6 @@ namespace BuildLinkApi.Infrastructure.Repositories
         public IGenericRepository<User> Users { get; }
 
         public IRoleRepository Roles { get; }
-
-        public IGenericRepository<AccountRole> AccountRoles { get; }
 
         public IRefreshTokenRepository RefreshTokens { get; }
 

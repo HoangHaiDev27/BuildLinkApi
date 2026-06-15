@@ -16,7 +16,6 @@ namespace BuildLinkApi.Infrastructure.Data
         public DbSet<Account> Accounts => Set<Account>();
         public DbSet<User> Users => Set<User>();
         public DbSet<Role> Roles => Set<Role>();
-        public DbSet<AccountRole> AccountRoles => Set<AccountRole>();
         public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
         public DbSet<Company> Companies => Set<Company>();

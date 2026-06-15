@@ -21,8 +21,7 @@ namespace BuildLinkApi.Infrastructure.Repositories
         {
             return await _context.RefreshTokens
                 .Include(x => x.Account)
-                    .ThenInclude(x => x.AccountRoles)
-                        .ThenInclude(x => x.Role)
+                    .ThenInclude(x => x.Role)
                 .FirstOrDefaultAsync(x => x.Token == token);
         }
     }

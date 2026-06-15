@@ -12,6 +12,6 @@ namespace BuildLinkApi.Domain.Entities
 
         public string? Description { get; set; }
 
-        public ICollection<AccountRole> AccountRoles { get; set; } = new List<AccountRole>();
+        public ICollection<Account> Accounts { get; set; } = new List<Account>();
     }
 }
