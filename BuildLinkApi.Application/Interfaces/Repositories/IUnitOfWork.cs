@@ -27,6 +27,7 @@ namespace BuildLinkApi.Application.Interfaces.Repositories
         IGenericRepository<ProjectImage> ProjectImages { get; }
 
         IGenericRepository<SystemSetting> SystemSettings { get; }
+        IGenericRepository<EmailVerificationToken> EmailVerificationTokens { get; }
 
         Task<int> SaveChangesAsync();
     }

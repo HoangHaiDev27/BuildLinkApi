@@ -11,6 +11,8 @@ using BuildLinkApi.Infrastructure.Repositories;
 using AutoMapper;
 using BuildLinkApi.Application.Interfaces.Services;
 using BuildLinkApi.Infrastructure.Services;
+using Amazon.SQS;
+using Amazon;
 namespace BuildLinkApi.Infrastructure
 {
     public static class DependencyInjection
@@ -29,6 +31,14 @@ namespace BuildLinkApi.Infrastructure
             services.AddScoped<IMapper, Mapper>();
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<IPasswordHasher, PasswordHasher>();
+            // AWS SQS Registration
+            var awsRegion = configuration["AWS:Region"] ?? "ap-southeast-1";
+            var sqsConfig = new AmazonSQSConfig
+            {
+                RegionEndpoint = RegionEndpoint.GetBySystemName(awsRegion)
+            };
+            services.AddSingleton<IAmazonSQS>(new AmazonSQSClient(sqsConfig));
+            services.AddScoped<IMessageQueueService, MessageQueueService>();
             return services;
         }
     }

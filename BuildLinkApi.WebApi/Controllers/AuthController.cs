@@ -15,6 +15,7 @@ namespace BuildLinkApi.WebApi.Controllers
     public class AuthController : ControllerBase
     {
         private readonly IAuthService _authservice;
+
         public AuthController(IAuthService authService)
         {
             _authservice = authService;

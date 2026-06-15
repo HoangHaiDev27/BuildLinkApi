@@ -17,6 +17,7 @@ namespace BuildLinkApi.Infrastructure.Data
         public DbSet<User> Users => Set<User>();
         public DbSet<Role> Roles => Set<Role>();
         public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+        public DbSet<EmailVerificationToken> EmailVerificationTokens => Set<EmailVerificationToken>();
 
         public DbSet<Company> Companies => Set<Company>();
         public DbSet<CompanyCertificate> CompanyCertificates => Set<CompanyCertificate>();
