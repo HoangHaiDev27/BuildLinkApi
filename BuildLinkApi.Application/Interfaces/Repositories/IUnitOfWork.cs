@@ -16,6 +16,8 @@ namespace BuildLinkApi.Application.Interfaces.Repositories
 
         IRefreshTokenRepository RefreshTokens { get; }
 
+        IGenericRepository<EmailVerificationToken> EmailVerificationTokens { get; }
+
         IGenericRepository<Company> Companies { get; }
 
         IGenericRepository<FileAsset> FileAssets { get; }
@@ -27,7 +29,6 @@ namespace BuildLinkApi.Application.Interfaces.Repositories
         IGenericRepository<ProjectImage> ProjectImages { get; }
 
         IGenericRepository<SystemSetting> SystemSettings { get; }
-        IGenericRepository<EmailVerificationToken> EmailVerificationTokens { get; }
 
         Task<int> SaveChangesAsync();
     }

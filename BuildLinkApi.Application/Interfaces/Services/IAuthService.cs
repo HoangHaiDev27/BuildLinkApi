@@ -18,5 +18,9 @@ namespace BuildLinkApi.Application.Interfaces.Services
         Task<ApiResponse<bool>> LogoutAsync(LogoutRequest request);
 
         Task<ApiResponse<AuthResponse>> RefreshTokenAsync(RefreshTokenRequest request);
+
+        Task<ApiResponse<bool>> VerifyEmailAsync(VerifyEmailRequest request);
+
+        Task<ApiResponse<bool>> ResendVerificationCodeAsync(ResendVerificationRequest request);
     }
 }

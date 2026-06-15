@@ -28,9 +28,9 @@ namespace BuildLinkApi.Infrastructure.Services
 
         private readonly IMapper _mapper;
 
-        private readonly IMessageQueueService _queueService;
+        private readonly IMessageQueueService _messageQueueService;
 
-        public AuthService(IConfiguration configuration, IUnitOfWork unitOfWork, IMapper mapper, IPasswordHasher hasher, IMessageQueueService queueService)
+        public AuthService(IConfiguration configuration, IUnitOfWork unitOfWork, IMapper mapper, IPasswordHasher hasher, IMessageQueueService messageQueueService)
         {
             _jwtSettings = configuration
         .GetSection("Jwt")
@@ -38,7 +38,7 @@ namespace BuildLinkApi.Infrastructure.Services
             _unitOfWork = unitOfWork;
             _mapper = mapper;
             _hasher = hasher;
-            _queueService = queueService;
+            _messageQueueService = messageQueueService;
         }
         public async Task<ApiResponse<CurrentAccountResponse>> GetCurrentAccountAsync(Guid accountId)
         {
@@ -61,21 +61,17 @@ namespace BuildLinkApi.Infrastructure.Services
             {
                 return ApiResponse<AuthResponse>.Fail("Email is not foud");
             }
+            if (account.Status == AccountStatus.Pending)
+            {
+                return ApiResponse<AuthResponse>.Fail("Tài khoản chưa xác thực email. Vui lòng xác thực trước khi đăng nhập.");
+            }
             if (account.Status != AccountStatus.Active)
             {
-                return ApiResponse<AuthResponse>.Fail("Emaild is not valid");
+                return ApiResponse<AuthResponse>.Fail("Tài khoản bị khóa hoặc vô hiệu hóa.");
             }
             if (!_hasher.VerifyPassword(request.Password, account.PasswordHash))
             {
                 return ApiResponse<AuthResponse>.Fail("Password is not valid");
-            }
-            if (account.Status == AccountStatus.Pending)
-            {
-                return ApiResponse<AuthResponse>.Fail("Acount is not active.You need check email please!");
-            }
-            if (account.Status != AccountStatus.Active)
-            {
-                return ApiResponse<AuthResponse>.Fail("Account is lock or invalid");
             }
             account.LastLoginAt = DateTime.Now;
 
@@ -171,7 +167,7 @@ namespace BuildLinkApi.Infrastructure.Services
             await _unitOfWork.EmailVerificationTokens.AddAsync(verificationToken);
 
             // Đẩy message lên AWS SQS Queue
-            await _queueService.PublishEmailVerificationAsync(account.Email, verificationCode);
+            await _messageQueueService.PublishEmailVerificationAsync(account.Email, verificationCode);
             await _unitOfWork.SaveChangesAsync();
 
             var result = new RegisterRespone
@@ -396,7 +392,7 @@ namespace BuildLinkApi.Infrastructure.Services
                 CreatedAt = DateTime.UtcNow
             };
             await _unitOfWork.EmailVerificationTokens.AddAsync(verificationToken);
-            await _queueService.PublishEmailVerificationAsync(email, verificationCode);
+            await _messageQueueService.PublishEmailVerificationAsync(email, verificationCode);
             await _unitOfWork.SaveChangesAsync();
             return ApiResponse<bool>.Ok(true, "Gửi lại mã xác thực thành công.");
         }
