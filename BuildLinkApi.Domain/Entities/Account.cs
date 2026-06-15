@@ -39,5 +39,7 @@ namespace BuildLinkApi.Domain.Entities
         public ICollection<Address> Addresses { get; set; } = new List<Address>();
 
         public ICollection<Order> Orders { get; set; } = new List<Order>();
+
+        public ICollection<EmailVerificationToken> EmailVerificationTokens { get; set; } = new List<EmailVerificationToken>();
     }
 }

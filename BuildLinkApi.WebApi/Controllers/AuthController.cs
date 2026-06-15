@@ -15,6 +15,7 @@ namespace BuildLinkApi.WebApi.Controllers
     public class AuthController : ControllerBase
     {
         private readonly IAuthService _authservice;
+
         public AuthController(IAuthService authService)
         {
             _authservice = authService;
@@ -152,6 +153,27 @@ namespace BuildLinkApi.WebApi.Controllers
                     "Logout successful"
                 ));
         }
-    }
 
+        [HttpPost("verify-email")]
+        public async Task<IActionResult> VerifyEmail([FromBody] VerifyEmailRequest request)
+        {
+            var result = await _authservice.VerifyEmailAsync(request);
+            if (!result.Success)
+            {
+                return BadRequest(result);
+            }
+            return Ok(result);
+        }
+
+        [HttpPost("resend-verification")]
+        public async Task<IActionResult> ResendVerification([FromBody] ResendVerificationRequest request)
+        {
+            var result = await _authservice.ResendVerificationCodeAsync(request);
+            if (!result.Success)
+            {
+                return BadRequest(result);
+            }
+            return Ok(result);
+        }
+    }
 }

@@ -28,7 +28,9 @@ namespace BuildLinkApi.Infrastructure.Services
 
         private readonly IMapper _mapper;
 
-        public AuthService(IConfiguration configuration, IUnitOfWork unitOfWork, IMapper mapper, IPasswordHasher hasher)
+        private readonly IMessageQueueService _messageQueueService;
+
+        public AuthService(IConfiguration configuration, IUnitOfWork unitOfWork, IMapper mapper, IPasswordHasher hasher, IMessageQueueService messageQueueService)
         {
             _jwtSettings = configuration
         .GetSection("Jwt")
@@ -36,6 +38,7 @@ namespace BuildLinkApi.Infrastructure.Services
             _unitOfWork = unitOfWork;
             _mapper = mapper;
             _hasher = hasher;
+            _messageQueueService = messageQueueService;
         }
         public async Task<ApiResponse<CurrentAccountResponse>> GetCurrentAccountAsync(Guid accountId)
         {
@@ -58,15 +61,18 @@ namespace BuildLinkApi.Infrastructure.Services
             {
                 return ApiResponse<AuthResponse>.Fail("Email is not foud");
             }
+            if (account.Status == AccountStatus.Pending)
+            {
+                return ApiResponse<AuthResponse>.Fail("Tài khoản chưa xác thực email. Vui lòng xác thực trước khi đăng nhập.");
+            }
             if (account.Status != AccountStatus.Active)
             {
-                return ApiResponse<AuthResponse>.Fail("Emaild is not valid");
+                return ApiResponse<AuthResponse>.Fail("Tài khoản bị khóa hoặc vô hiệu hóa.");
             }
             if (!_hasher.VerifyPassword(request.Password, account.PasswordHash))
             {
                 return ApiResponse<AuthResponse>.Fail("Password is not valid");
             }
-
             account.LastLoginAt = DateTime.Now;
 
             var role = account.Role.Name;
@@ -110,7 +116,7 @@ namespace BuildLinkApi.Infrastructure.Services
                 Id = Guid.NewGuid(),
                 Email = email,
                 PasswordHash = _hasher.HashPassword(request.Password),
-                Status = AccountStatus.Active,
+                Status = AccountStatus.Pending,
                 CreatedAt = DateTime.UtcNow,
                 RoleId = role.Id
             };
@@ -147,7 +153,21 @@ namespace BuildLinkApi.Infrastructure.Services
             }
 
             await _unitOfWork.Accounts.AddAsync(account);
+            // Sinh mã OTP & Lưu vào bảng EmailVerificationTokens
+            var verificationCode = new Random().Next(100000, 999999).ToString();
+            var verificationToken = new EmailVerificationToken
+            {
+                Id = Guid.NewGuid(),
+                AccountId = account.Id,
+                Code = verificationCode,
+                ExpiresAt = DateTime.UtcNow.AddMinutes(10),
+                IsUsed = false,
+                CreatedAt = DateTime.UtcNow
+            };
+            await _unitOfWork.EmailVerificationTokens.AddAsync(verificationToken);
 
+            // Đẩy message lên AWS SQS Queue
+            await _messageQueueService.PublishEmailVerificationAsync(account.Email, verificationCode);
             await _unitOfWork.SaveChangesAsync();
 
             var result = new RegisterRespone
@@ -316,6 +336,67 @@ namespace BuildLinkApi.Infrastructure.Services
 
             return ApiResponse<AuthResponse>.Ok(authResponse, "Token refreshed successfully");
         }
+        public async Task<ApiResponse<bool>> VerifyEmailAsync(VerifyEmailRequest request)
+        {
+            var email = request.Email.Trim().ToLower();
+            var account = await _unitOfWork.Accounts.GetByEmailWithRoleAsync(email);
+            if (account == null)
+            {
+                return ApiResponse<bool>.Fail("Tài khoản không tồn tại");
+            }
+            if (account.Status == AccountStatus.Active)
+            {
+                return ApiResponse<bool>.Fail("Tài khoản này đã được xác thực trước đó.");
+            }
+            var token = await _unitOfWork.EmailVerificationTokens
+                .FirstOrDefaultAsync(x => x.AccountId == account.Id && !x.IsUsed && x.Code == request.Code && x.ExpiresAt > DateTime.UtcNow);
+            if (token == null)
+            {
+                return ApiResponse<bool>.Fail("Mã xác thực không đúng hoặc đã hết hạn.");
+            }
+            token.IsUsed = true;
+            token.UpdatedAt = DateTime.UtcNow;
+            account.Status = AccountStatus.Active;
+            account.EmailVerifiedAt = DateTime.UtcNow;
+            account.UpdatedAt = DateTime.UtcNow;
+            await _unitOfWork.SaveChangesAsync();
+            return ApiResponse<bool>.Ok(true, "Xác thực email thành công.");
+        }
+        public async Task<ApiResponse<bool>> ResendVerificationCodeAsync(ResendVerificationRequest request)
+        {
+            var email = request.Email.Trim().ToLower();
+            var account = await _unitOfWork.Accounts.GetByEmailAsync(email);
+            if (account == null)
+            {
+                return ApiResponse<bool>.Fail("Tài khoản không tồn tại");
+            }
+            if (account.Status == AccountStatus.Active)
+            {
+                return ApiResponse<bool>.Fail("Tài khoản này đã được xác thực.");
+            }
+            // Vô hiệu hóa các mã cũ chưa dùng của tài khoản này
+            var oldTokens = await _unitOfWork.EmailVerificationTokens.FindAsync(x => x.AccountId == account.Id && !x.IsUsed);
+            foreach (var oldToken in oldTokens)
+            {
+                oldToken.IsUsed = true;
+                oldToken.UpdatedAt = DateTime.UtcNow;
+            }
+            var verificationCode = new Random().Next(100000, 999999).ToString();
+            var verificationToken = new EmailVerificationToken
+            {
+                Id = Guid.NewGuid(),
+                AccountId = account.Id,
+                Code = verificationCode,
+                ExpiresAt = DateTime.UtcNow.AddMinutes(10),
+                IsUsed = false,
+                CreatedAt = DateTime.UtcNow
+            };
+            await _unitOfWork.EmailVerificationTokens.AddAsync(verificationToken);
+            await _messageQueueService.PublishEmailVerificationAsync(email, verificationCode);
+            await _unitOfWork.SaveChangesAsync();
+            return ApiResponse<bool>.Ok(true, "Gửi lại mã xác thực thành công.");
+        }
+
 
     }
 

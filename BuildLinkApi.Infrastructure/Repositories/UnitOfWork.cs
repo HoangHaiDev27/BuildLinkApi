@@ -29,6 +29,8 @@ namespace BuildLinkApi.Infrastructure.Repositories
             ProjectImages = new GenericRepository<ProjectImage>(_context);
 
             SystemSettings = new GenericRepository<SystemSetting>(_context);
+
+            EmailVerificationTokens = new GenericRepository<EmailVerificationToken>(_context);
         }
 
         public IAccountRepository Accounts { get; }
@@ -50,6 +52,8 @@ namespace BuildLinkApi.Infrastructure.Repositories
         public IGenericRepository<ProjectImage> ProjectImages { get; }
 
         public IGenericRepository<SystemSetting> SystemSettings { get; }
+
+        public IGenericRepository<EmailVerificationToken> EmailVerificationTokens { get; }
 
         public async Task<int> SaveChangesAsync()
         {

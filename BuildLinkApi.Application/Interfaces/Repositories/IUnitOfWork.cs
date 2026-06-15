@@ -16,6 +16,8 @@ namespace BuildLinkApi.Application.Interfaces.Repositories
 
         IRefreshTokenRepository RefreshTokens { get; }
 
+        IGenericRepository<EmailVerificationToken> EmailVerificationTokens { get; }
+
         IGenericRepository<Company> Companies { get; }
 
         IGenericRepository<FileAsset> FileAssets { get; }
